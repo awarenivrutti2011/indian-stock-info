@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>📈 Indian Stock Dashboard</title>
+
+<style>
+body{
+background:linear-gradient(to right,#0f2027,#203a43,#2c5364);
+font-family:Arial;
+color:white;
+text-align:center;
+}
+h1{color:#00ffcc;}
+
+button{
+padding:12px 25px;
+margin:10px;
+border:none;
+border-radius:10px;
+background:orange;
+font-size:18px;
+cursor:pointer;
+font-weight:bold;
+box-shadow:0 0 10px orange;
+}
+button:hover{background:#ffcc00;}
+
+table{
+width:95%;
+margin:auto;
+border-collapse:collapse;
+background:black;
+margin-top:20px;
+}
+th,td{padding:12px;border:1px solid #555;}
+th{background:orange;color:black;}
+tr:hover{background:#111;}
+
+.loader{
+display:none;
+font-size:22px;
+color:yellow;
+margin:20px;
+}
+
+.card{
+background:#111;
+padding:20px;
+margin:20px;
+border-radius:15px;
+box-shadow:0 0 15px cyan;
+}
+
+footer{
+margin-top:40px;
+padding:20px;
+background:black;
+color:#00ffcc;
+font-size:18px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>📈 Indian Stock LIVE Dashboard</h1>
+
+<button onclick="loadShockers()">🔥 Price Shockers</button>
+<button onclick="loadIPO()">📊 IPO Details</button>
+<button onclick="toggleSubscribe()">💎 Subscribe</button>
+
+<br>
+<a href="/admin_page" target="_blank">
+<button style="background:red">👑 Admin Panel</button>
+</a>
+
+<div class="loader" id="loader">⏳ Loading live market data...</div>
+
+<div id="subscribeBox" class="card" style="display:none;">
+<h2>💎 Subscribe Premium</h2>
+<input id="name" placeholder="Name"><br><br>
+<input id="email" placeholder="Email"><br><br>
+<input id="phone" placeholder="Phone"><br><br>
+
+<select id="plan">
+<option>Basic</option>
+<option>Pro</option>
+<option>Premium</option>
+</select><br><br>
+
+<button onclick="subscribe()">Subscribe Now</button>
+</div>
+
+<div id="output"></div>
+
+<footer>
+Developed by <b>Nivrutti Aware</b> 🚀 <br>
+Founder: Stepup Classes
+</footer>
+
+<script>
+function showLoader(){
+document.getElementById("loader").style.display="block"
+document.getElementById("output").innerHTML=""
+}
+function hideLoader(){
+document.getElementById("loader").style.display="none"
+}
+function toggleSubscribe(){
+let box=document.getElementById("subscribeBox")
+box.style.display = box.style.display=="none"?"block":"none"
+}
+
+//////////////////////////////////////////////////////
+function loadShockers(){
+showLoader()
+setTimeout(()=>{
+fetch("/price_shockers")
+.then(r=>r.json())
+.then(data=>{
+hideLoader()
+
+let html="<h2>🔥 Price Shockers</h2><table>"
+html+="<tr><th>Name</th><th>Price</th><th>%</th><th>Trend</th></tr>"
+
+let all=[...(data.BSE_PriceShocker||[]),...(data.NSE_PriceShocker||[])]
+
+all.forEach(s=>{
+html+=`<tr>
+<td>${s.displayName}</td>
+<td>₹ ${s.price}</td>
+<td>${s.percentChange}%</td>
+<td>${s.overallRating}</td>
+</tr>`
+})
+
+html+="</table>"
+document.getElementById("output").innerHTML=html
+})
+},4000)
+}
+
+//////////////////////////////////////////////////////
+function loadIPO(){
+showLoader()
+setTimeout(()=>{
+fetch("/ipo")
+.then(r=>r.json())
+.then(data=>{
+hideLoader()
+
+function table(title,arr){
+if(!arr)return""
+let h=`<h2>${title}</h2><table>
+<tr><th>Name</th><th>Price</th><th>Open</th><th>Listing</th></tr>`
+arr.forEach(s=>{
+h+=`<tr>
+<td>${s.name}</td>
+<td>${s.min_price??'-'}-${s.max_price??'-'}</td>
+<td>${s.bidding_start_date??'-'}</td>
+<td>${s.listing_date??'-'}</td>
+</tr>`
+})
+return h+"</table>"
+}
+
+let html=""
+html+=table("📊 Upcoming IPO",data.upcoming)
+html+=table("🔥 Active IPO",data.active)
+html+=table("🏆 Listed IPO",data.listed)
+
+document.getElementById("output").innerHTML=html
+})
+},4000)
+}
+
+//////////////////////////////////////////////////////
+function subscribe(){
+let data={
+name:name.value,
+email:email.value,
+phone:phone.value,
+plan:plan.value
+}
+
+fetch("/subscribe",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify(data)
+})
+.then(r=>r.json())
+.then(()=>{
+alert("✅ Subscribed Successfully")
+})
+}
+</script>
+</body>
+</html>
+
