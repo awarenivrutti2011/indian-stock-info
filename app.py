@@ -1,49 +1,69 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import requests
 import mysql.connector
 
 app = Flask(__name__)
 
-# MySQL connection
-db = mysql.connector.connect(
-    host="mysql",
-    user="root",
-    password="root123",
-    database="stockdb"
-)
+# 🔥 HOME PAGE
+@app.route('/')
+def home():
+    return send_file("index.html")
 
-# 🔥 stock api
+
+# 🔥 STOCK API
 @app.route('/stock/<symbol>')
 def get_stock(symbol):
     url = "https://real-time-finance-data.p.rapidapi.com/search"
-
     querystring = {"query": symbol, "language": "en"}
 
     headers = {
         "x-rapidapi-host": "real-time-finance-data.p.rapidapi.com",
-        "x-rapidapi-key": "bd6e08e67dmsh3937cf5cd697c01p1503b2jsn019262bfc7a9"
+        "x-rapidapi-key": "YOUR_API_KEY"   # <-- put your key
     }
 
     response = requests.get(url, headers=headers, params=querystring)
     return response.json()
 
 
-# 🔥 subscribe api
+# 🔥 SUBSCRIBE API
 @app.route('/subscribe', methods=['POST'])
 def subscribe():
     data = request.json
 
-    cursor = db.cursor()
-    sql = "INSERT INTO subscribers (name,email,phone,plan) VALUES (%s,%s,%s,%s)"
-    cursor.execute(sql,(data['name'],data['email'],data['phone'],data['plan']))
-    db.commit()
+    try:
+        # fresh db connection every request
+        db = mysql.connector.connect(
+            host="mysql",
+            user="root",
+            password="root123",
+            database="stockdb"
+        )
 
-    return jsonify({"msg":"User subscribed"})
+        cursor = db.cursor()
+
+        # auto create table if not exists
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS subscribers(
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(100),
+            email VARCHAR(100),
+            phone VARCHAR(20),
+            plan VARCHAR(50),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+
+        # insert data
+        sql = "INSERT INTO subscribers (name,email,phone,plan) VALUES (%s,%s,%s,%s)"
+        cursor.execute(sql,(data['name'],data['email'],data['phone'],data['plan']))
+        db.commit()
+
+        return jsonify({"msg":"Subscription successful"})
+
+    except Exception as e:
+        return jsonify({"error":str(e)})
 
 
-@app.route('/')
-def home():
-    return "Indian Stock Info Running"
-
-app.run(host='0.0.0.0',port=5000)
+# 🔥 RUN APP
+app.run(host='0.0.0.0', port=5000)
 
