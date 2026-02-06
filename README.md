@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🇮🇳 Indian Stock Info DevOps Project
 
 DevOps interview killer project.
@@ -11,3 +12,6 @@ Features:
 Flow:
 GitHub → Jenkins → Docker → Kubernetes
 
+=======
+# indian-stock-info
+>>>>>>> 40e49afa3ea898fc9b4d2cbdb719f8bc23091781
