@@ -1,0 +1,28 @@
+<h2>Subscribe</h2>
+
+<input id="name" placeholder="Name"><br>
+<input id="email" placeholder="Email"><br>
+<input id="phone" placeholder="Phone"><br>
+
+<select id="plan">
+<option>Basic</option>
+<option>Pro</option>
+</select>
+
+<button onclick="sub()">Subscribe</button>
+
+<script>
+function sub(){
+fetch("/subscribe",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+name:document.getElementById("name").value,
+email:document.getElementById("email").value,
+phone:document.getElementById("phone").value,
+plan:document.getElementById("plan").value
+})
+}).then(r=>r.json()).then(d=>alert("Subscribed"))
+}
+</script>
+
