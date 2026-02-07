@@ -16,7 +16,7 @@ db = mysql.connector.connect(
 # ---------------- HOME PAGE ----------------
 @app.route('/')
 def home():
-    return send_file("index.html")
+    return render_template("index.html")
 
 # ---------------- ADMIN PAGE ----------------
 @app.route('/admin')
