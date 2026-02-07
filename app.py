@@ -1,69 +1,71 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, render_template, jsonify, request
 import requests
-import mysql.connector
 
 app = Flask(__name__)
 
-# 🔥 HOME PAGE
-@app.route('/')
+# ================================
+# 🔥 YOUR RAPIDAPI KEY (already added)
+# ================================
+NEWS_API_URL = "https://share-market-news-api-india.p.rapidapi.com/marketNews"
+HEADERS = {
+    "x-rapidapi-host": "share-market-news-api-india.p.rapidapi.com",
+    "x-rapidapi-key": "2c482e59eemsh84b3ee988562f35p1da2bfjsn9d541cf8e4f8"
+}
+
+# ================================
+# 🔥 STORE SUBSCRIBERS (memory)
+# ================================
+subscribers = []
+
+# ================================
+# HOME PAGE
+# ================================
+@app.route("/")
 def home():
-    return send_file("index.html")
+    return render_template("index.html")
 
+# ================================
+# ADMIN PAGE
+# ================================
+@app.route("/admin")
+def admin():
+    return render_template("admin.html")
 
-# 🔥 STOCK API
-@app.route('/stock/<symbol>')
-def get_stock(symbol):
-    url = "https://real-time-finance-data.p.rapidapi.com/search"
-    querystring = {"query": symbol, "language": "en"}
+# ================================
+# GET MARKET NEWS
+# ================================
+@app.route("/get_news")
+def get_news():
+    try:
+        res = requests.get(NEWS_API_URL, headers=HEADERS, timeout=10)
+        data = res.json()
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
-    headers = {
-        "x-rapidapi-host": "real-time-finance-data.p.rapidapi.com",
-        "x-rapidapi-key": "YOUR_API_KEY"   # <-- put your key
-    }
-
-    response = requests.get(url, headers=headers, params=querystring)
-    return response.json()
-
-
-# 🔥 SUBSCRIBE API
-@app.route('/subscribe', methods=['POST'])
+# ================================
+# SUBSCRIBE API
+# ================================
+@app.route("/subscribe", methods=["POST"])
 def subscribe():
     data = request.json
+    email = data.get("email")
 
-    try:
-        # fresh db connection every request
-        db = mysql.connector.connect(
-            host="mysql",
-            user="root",
-            password="root123",
-            database="stockdb"
-        )
+    if email and email not in subscribers:
+        subscribers.append(email)
 
-        cursor = db.cursor()
+    return jsonify({"status": "subscribed", "total": len(subscribers)})
 
-        # auto create table if not exists
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS subscribers(
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(100),
-            email VARCHAR(100),
-            phone VARCHAR(20),
-            plan VARCHAR(50),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-        """)
+# ================================
+# GET SUBSCRIBERS (ADMIN)
+# ================================
+@app.route("/get_subscribers")
+def get_subscribers():
+    return jsonify(subscribers)
 
-        # insert data
-        sql = "INSERT INTO subscribers (name,email,phone,plan) VALUES (%s,%s,%s,%s)"
-        cursor.execute(sql,(data['name'],data['email'],data['phone'],data['plan']))
-        db.commit()
-
-        return jsonify({"msg":"Subscription successful"})
-
-    except Exception as e:
-        return jsonify({"error":str(e)})
-
-
-# 🔥 RUN APP
-app.run(host='0.0.0.0', port=5000)
+# ================================
+# RUN
+# ================================
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
 
