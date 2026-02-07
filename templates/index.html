@@ -5,106 +5,89 @@
 
 <style>
 body{
-    font-family: Arial;
-    background:#0f172a;
-    color:white;
-    margin:0;
+font-family:Arial;
+background:#020617;
+color:white;
+text-align:center;
 }
 
-.header{
-    background:#020617;
-    padding:20px;
-    text-align:center;
-    font-size:28px;
-    font-weight:bold;
-}
+h1{color:#22c55e}
 
-.container{
-    width:90%;
-    margin:auto;
-    padding:20px;
-}
-
-h2{
-    color:#22c55e;
+button{
+padding:12px;
+margin:8px;
+border:none;
+background:#22c55e;
+color:white;
+font-size:16px;
+cursor:pointer;
+border-radius:6px;
 }
 
 input{
-    padding:12px;
-    width:260px;
-    border-radius:6px;
-    border:none;
-}
-
-button{
-    padding:12px 18px;
-    border:none;
-    border-radius:6px;
-    background:#22c55e;
-    color:white;
-    cursor:pointer;
-    font-weight:bold;
-}
-
-.grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
-    gap:20px;
-    margin-top:20px;
+padding:12px;
+margin:8px;
+width:220px;
+border-radius:6px;
+border:none;
 }
 
 .card{
-    background:#1e293b;
-    padding:20px;
-    border-radius:12px;
-    box-shadow:0 0 10px black;
+background:#0f172a;
+margin:15px auto;
+padding:15px;
+width:90%;
+border-radius:10px;
+box-shadow:0 0 10px #000;
 }
 
-.news{
-    background:#020617;
-    padding:12px;
-    margin:10px 0;
-    border-radius:8px;
+table{
+width:100%;
+border-collapse:collapse;
 }
 
-.adminbtn{
-    background:#3b82f6;
+th,td{
+padding:10px;
+border-bottom:1px solid #334155;
+}
+
+.green{color:#22c55e;font-weight:bold;}
+.red{color:#ef4444;font-weight:bold;}
+
+.loader{
+display:none;
+margin:20px;
+font-size:18px;
+color:yellow;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">
-📈 Indian Stock Market Dashboard  
-<br>
-<span style="font-size:16px">Developed by Nivrutti Aware | StepUp Classes</span>
-</div>
-
-<div class="container">
+<h1>📈 Indian Stock Market Dashboard</h1>
+<h3>Developed by Nivrutti Aware | StepUp Classes</h3>
 
 <!-- SEARCH -->
 <h2>🔎 Search Stock</h2>
-<input id="stockname" placeholder="Enter stock name like TCS">
+<input id="stockname" placeholder="Enter stock name">
 <button onclick="searchStock()">Search</button>
 
-<div id="stockresult" class="grid"></div>
+<div class="loader" id="load1">⏳ Loading...</div>
+<div id="stockresult"></div>
 
 <hr>
 
-<!-- BUTTONS -->
 <button onclick="loadPrice()">📊 Price Shockers</button>
-<button onclick="loadIPO()">🚀 IPO Details</button>
-<button onclick="loadNews()">📰 Market News</button>
+<button onclick="loadIPO()">🚀 IPO</button>
+<button onclick="loadNews()">📰 News</button>
 
-<div id="price" class="grid"></div>
-<div id="ipo" class="grid"></div>
-<div id="news"></div>
+<div class="loader" id="load2">⏳ Loading...</div>
+<div id="data"></div>
 
 <hr>
 
-<!-- SUBSCRIBE -->
-<h2>💎 Subscribe for Premium Alerts</h2>
+<h2>💎 Subscribe</h2>
 <input id="name" placeholder="Name">
 <input id="email" placeholder="Email">
 <input id="phone" placeholder="Phone">
@@ -112,119 +95,102 @@ button{
 <button onclick="subscribe()">Subscribe</button>
 
 <br><br>
-
 <a href="/admin" target="_blank">
-<button class="adminbtn">🔐 Open Admin Dashboard</button>
+<button>🔐 Admin Dashboard</button>
 </a>
-
-</div>
 
 <script>
 
-// SEARCH STOCK
+function showLoader(id){
+document.getElementById(id).style.display="block";
+setTimeout(()=>{document.getElementById(id).style.display="none"},4000);
+}
+
 function searchStock(){
 let s=document.getElementById("stockname").value;
+showLoader("load1");
 
 fetch("/search/"+s)
 .then(r=>r.json())
 .then(d=>{
+let html="<div class='card'><h3>"+s.toUpperCase()+" Details</h3><table>";
 
-let html="";
-
-if(d.data){
-let stock=d.data[0];
-
-html+=`
-<div class="card">
-<h3>📊 ${stock.name}</h3>
-<p>💰 Price: ${stock.price}</p>
-<p>📈 Change: ${stock.change}</p>
-<p>📊 Market Cap: ${stock.marketCap}</p>
-<p>🏢 Exchange: ${stock.exchange}</p>
-</div>
-`;
-}else{
-html="<div class='card'>No Data Found</div>";
+for(let k in d){
+html+="<tr><td>"+k+"</td><td>"+d[k]+"</td></tr>";
 }
 
+html+="</table></div>";
 document.getElementById("stockresult").innerHTML=html;
 });
 }
 
-
-// PRICE SHOCKERS
 function loadPrice(){
+showLoader("load2");
+
 fetch("/price")
 .then(r=>r.json())
 .then(d=>{
+let html="<div class='card'><h3>🔥 Price Shockers</h3><table>";
+html+="<tr><th>Name</th><th>Price</th><th>%Change</th><th>Trend</th></tr>";
 
-let html="";
-let arr=d.data || [];
+let arr=d.BSE_PriceShocker || [];
 
 arr.forEach(x=>{
-html+=`
-<div class="card">
-<h3>${x.symbol}</h3>
-<p>Price: ${x.price}</p>
-<p style="color:lime">Change: ${x.percentChange}%</p>
-</div>
-`;
+let color=x.percentChange>0?"green":"red";
+let arrow=x.percentChange>0?"▲":"▼";
+
+html+=`<tr>
+<td>${x.displayName}</td>
+<td>${x.price}</td>
+<td class="${color}">${x.percentChange}%</td>
+<td class="${color}">${arrow}</td>
+</tr>`;
 });
 
-document.getElementById("price").innerHTML=html;
+html+="</table></div>";
+document.getElementById("data").innerHTML=html;
 });
 }
 
-
-// IPO
 function loadIPO(){
+showLoader("load2");
+
 fetch("/ipo")
 .then(r=>r.json())
 .then(d=>{
+let html="<div class='card'><h3>🚀 IPO List</h3><table>";
+html+="<tr><th>Name</th><th>Price</th><th>Status</th></tr>";
 
-let html="";
-let arr=d.data || [];
-
-arr.forEach(x=>{
-html+=`
-<div class="card">
-<h3>${x.name}</h3>
-<p>Price: ${x.price}</p>
-<p>Open: ${x.openDate}</p>
-<p>Close: ${x.closeDate}</p>
-</div>
-`;
+(d||[]).forEach(x=>{
+html+=`<tr>
+<td>${x.name||'-'}</td>
+<td>${x.price||'-'}</td>
+<td class="green">${x.status||'-'}</td>
+</tr>`;
 });
 
-document.getElementById("ipo").innerHTML=html;
+html+="</table></div>";
+document.getElementById("data").innerHTML=html;
 });
 }
 
-
-// NEWS
 function loadNews(){
+showLoader("load2");
+
 fetch("/news")
 .then(r=>r.json())
 .then(d=>{
+let html="<div class='card'><h3>📰 Market News</h3>";
 
-let html="";
-let arr=d.data || [];
-
-arr.forEach(n=>{
-html+=`
-<div class="news">
-📰 ${n.title} <br>
-<a href="${n.url}" target="_blank">Read More</a>
-</div>
-`;
+(d.data||[]).forEach(x=>{
+html+=`<p>🔹 ${x.title}</p>`;
 });
 
-document.getElementById("news").innerHTML=html;
+html+="</div>";
+document.getElementById("data").innerHTML=html;
 });
 }
 
-
-// SUBSCRIBE
 function subscribe(){
 fetch("/subscribe",{
 method:"POST",
