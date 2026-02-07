@@ -8,64 +8,103 @@ body{
     font-family: Arial;
     background:#0f172a;
     color:white;
-    text-align:center;
+    margin:0;
 }
 
-button{
-    padding:12px;
-    margin:10px;
-    border:none;
-    background:#22c55e;
-    color:white;
-    font-size:16px;
-    cursor:pointer;
+.header{
+    background:#020617;
+    padding:20px;
+    text-align:center;
+    font-size:28px;
+    font-weight:bold;
+}
+
+.container{
+    width:90%;
+    margin:auto;
+    padding:20px;
+}
+
+h2{
+    color:#22c55e;
 }
 
 input{
-    padding:10px;
-    margin:10px;
-    width:250px;
+    padding:12px;
+    width:260px;
+    border-radius:6px;
+    border:none;
+}
+
+button{
+    padding:12px 18px;
+    border:none;
+    border-radius:6px;
+    background:#22c55e;
+    color:white;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:20px;
+    margin-top:20px;
 }
 
 .card{
     background:#1e293b;
-    margin:10px;
-    padding:15px;
-    border-radius:10px;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 0 10px black;
+}
+
+.news{
+    background:#020617;
+    padding:12px;
+    margin:10px 0;
+    border-radius:8px;
+}
+
+.adminbtn{
+    background:#3b82f6;
 }
 </style>
 </head>
 
 <body>
 
-<h1>📈 Indian Stock Market Dashboard</h1>
-<h3>Developed by Nivrutti Aware | StepUp Classes</h3>
+<div class="header">
+📈 Indian Stock Market Dashboard  
+<br>
+<span style="font-size:16px">Developed by Nivrutti Aware | StepUp Classes</span>
+</div>
 
-<!-- SEARCH STOCK -->
+<div class="container">
+
+<!-- SEARCH -->
 <h2>🔎 Search Stock</h2>
-<input id="stockname" placeholder="Enter stock name (TCS)">
+<input id="stockname" placeholder="Enter stock name like TCS">
 <button onclick="searchStock()">Search</button>
 
-<div id="stockresult"></div>
+<div id="stockresult" class="grid"></div>
 
 <hr>
 
-<!-- PRICE -->
+<!-- BUTTONS -->
 <button onclick="loadPrice()">📊 Price Shockers</button>
-<div id="price"></div>
-
-<!-- IPO -->
 <button onclick="loadIPO()">🚀 IPO Details</button>
-<div id="ipo"></div>
-
-<!-- NEWS -->
 <button onclick="loadNews()">📰 Market News</button>
+
+<div id="price" class="grid"></div>
+<div id="ipo" class="grid"></div>
 <div id="news"></div>
 
 <hr>
 
 <!-- SUBSCRIBE -->
-<h2>Subscribe</h2>
+<h2>💎 Subscribe for Premium Alerts</h2>
 <input id="name" placeholder="Name">
 <input id="email" placeholder="Email">
 <input id="phone" placeholder="Phone">
@@ -73,52 +112,120 @@ input{
 <button onclick="subscribe()">Subscribe</button>
 
 <br><br>
+
 <a href="/admin" target="_blank">
-<button>🔐 Admin Dashboard</button>
+<button class="adminbtn">🔐 Open Admin Dashboard</button>
 </a>
+
+</div>
 
 <script>
 
+// SEARCH STOCK
 function searchStock(){
 let s=document.getElementById("stockname").value;
 
 fetch("/search/"+s)
 .then(r=>r.json())
 .then(d=>{
-document.getElementById("stockresult").innerHTML=
-"<div class='card'><pre>"+JSON.stringify(d,null,2)+"</pre></div>";
+
+let html="";
+
+if(d.data){
+let stock=d.data[0];
+
+html+=`
+<div class="card">
+<h3>📊 ${stock.name}</h3>
+<p>💰 Price: ${stock.price}</p>
+<p>📈 Change: ${stock.change}</p>
+<p>📊 Market Cap: ${stock.marketCap}</p>
+<p>🏢 Exchange: ${stock.exchange}</p>
+</div>
+`;
+}else{
+html="<div class='card'>No Data Found</div>";
+}
+
+document.getElementById("stockresult").innerHTML=html;
 });
 }
 
+
+// PRICE SHOCKERS
 function loadPrice(){
 fetch("/price")
 .then(r=>r.json())
 .then(d=>{
-document.getElementById("price").innerHTML=
-"<div class='card'><pre>"+JSON.stringify(d,null,2)+"</pre></div>";
+
+let html="";
+let arr=d.data || [];
+
+arr.forEach(x=>{
+html+=`
+<div class="card">
+<h3>${x.symbol}</h3>
+<p>Price: ${x.price}</p>
+<p style="color:lime">Change: ${x.percentChange}%</p>
+</div>
+`;
+});
+
+document.getElementById("price").innerHTML=html;
 });
 }
 
+
+// IPO
 function loadIPO(){
 fetch("/ipo")
 .then(r=>r.json())
 .then(d=>{
-document.getElementById("ipo").innerHTML=
-"<div class='card'><pre>"+JSON.stringify(d,null,2)+"</pre></div>";
+
+let html="";
+let arr=d.data || [];
+
+arr.forEach(x=>{
+html+=`
+<div class="card">
+<h3>${x.name}</h3>
+<p>Price: ${x.price}</p>
+<p>Open: ${x.openDate}</p>
+<p>Close: ${x.closeDate}</p>
+</div>
+`;
+});
+
+document.getElementById("ipo").innerHTML=html;
 });
 }
 
+
+// NEWS
 function loadNews(){
 fetch("/news")
 .then(r=>r.json())
 .then(d=>{
-document.getElementById("news").innerHTML=
-"<div class='card'><pre>"+JSON.stringify(d,null,2)+"</pre></div>";
+
+let html="";
+let arr=d.data || [];
+
+arr.forEach(n=>{
+html+=`
+<div class="news">
+📰 ${n.title} <br>
+<a href="${n.url}" target="_blank">Read More</a>
+</div>
+`;
+});
+
+document.getElementById("news").innerHTML=html;
 });
 }
 
-function subscribe(){
 
+// SUBSCRIBE
+function subscribe(){
 fetch("/subscribe",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
@@ -132,7 +239,7 @@ plan:document.getElementById("plan").value
 .then(r=>r.json())
 .then(d=>alert(d.msg));
 }
-</script>
 
+</script>
 </body>
 </html>
