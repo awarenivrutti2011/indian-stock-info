@@ -113,16 +113,63 @@ showLoader("load1");
 fetch("/search/"+s)
 .then(r=>r.json())
 .then(d=>{
-let html="<div class='card'><h3>"+s.toUpperCase()+" Details</h3><table>";
 
-for(let k in d){
-html+="<tr><td>"+k+"</td><td>"+d[k]+"</td></tr>";
+if(!d || d.error){
+document.getElementById("stockresult").innerHTML="<div class='card'>❌ No Data Found</div>";
+return;
 }
 
-html+="</table></div>";
+let html="<div class='card'>";
+html+="<h2>📊 "+(d.companyName || s)+"</h2>";
+
+/* BASIC INFO */
+html+="<table>";
+html+="<tr><td>🏢 Company</td><td>"+(d.companyName||'-')+"</td></tr>";
+html+="<tr><td>🏭 Industry</td><td>"+(d.industry||'-')+"</td></tr>";
+
+if(d.currentPrice){
+html+="<tr><td>💰 Current Price</td><td class='green'>₹ "+(d.currentPrice.NSE||'-')+"</td></tr>";
+}
+
+html+="</table><br>";
+
+/* ANALYST VIEW */
+if(d.analystView){
+html+="<h3>📈 Analyst Rating</h3>";
+html+="<table><tr><th>Rating</th><th>Analysts</th></tr>";
+
+d.analystView.forEach(a=>{
+html+=`<tr>
+<td>${a.ratingName||'-'}</td>
+<td>${a.numberOfAnalystsLatest||'-'}</td>
+</tr>`;
+});
+
+html+="</table><br>";
+}
+
+/* FINANCIALS */
+if(d.financials){
+html+="<h3>💼 Financials</h3>";
+html+="<table><tr><th>Year</th><th>Revenue</th><th>Profit</th></tr>";
+
+d.financials.slice(0,5).forEach(f=>{
+html+=`<tr>
+<td>${f.year||'-'}</td>
+<td>${f.revenue||'-'}</td>
+<td>${f.profit||'-'}</td>
+</tr>`;
+});
+
+html+="</table>";
+}
+
+html+="</div>";
+
 document.getElementById("stockresult").innerHTML=html;
 });
 }
+
 
 function loadPrice(){
 showLoader("load2");
