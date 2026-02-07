@@ -1,152 +1,138 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Indian Stock Dashboard</title>
+<title>Indian Stock Dashboard</title>
 
-    <style>
-        body {
-            font-family: Arial;
-            background: linear-gradient(to right,#0f2027,#203a43,#2c5364);
-            color: white;
-            margin:0;
-        }
+<style>
+body{
+    font-family: Arial;
+    background:#0f172a;
+    color:white;
+    text-align:center;
+}
 
-        header{
-            background:#111;
-            padding:15px;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-        }
+button{
+    padding:12px;
+    margin:10px;
+    border:none;
+    background:#22c55e;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+}
 
-        .logo{
-            font-size:22px;
-            font-weight:bold;
-            color:#00e5ff;
-        }
+input{
+    padding:10px;
+    margin:10px;
+    width:250px;
+}
 
-        .btn{
-            padding:10px 15px;
-            background:orange;
-            border:none;
-            border-radius:6px;
-            cursor:pointer;
-            font-weight:bold;
-            margin:5px;
-        }
-
-        .container{
-            padding:30px;
-            text-align:center;
-        }
-
-        .card{
-            background:#111;
-            padding:20px;
-            margin:15px;
-            border-radius:10px;
-            box-shadow:0 0 10px cyan;
-        }
-
-        input{
-            padding:10px;
-            width:250px;
-            border-radius:6px;
-            border:none;
-        }
-
-        table{
-            width:100%;
-            background:#000;
-            margin-top:20px;
-            border-collapse:collapse;
-        }
-
-        th,td{
-            padding:10px;
-            border:1px solid #444;
-        }
-
-        th{background:orange;color:black}
-    </style>
+.card{
+    background:#1e293b;
+    margin:10px;
+    padding:15px;
+    border-radius:10px;
+}
+</style>
 </head>
 
 <body>
 
-<header>
-    <div class="logo">📈 Indian Stock Pro</div>
-    <div>
-        <a href="/admin"><button class="btn">Admin Dashboard</button></a>
-    </div>
-</header>
+<h1>📈 Indian Stock Market Dashboard</h1>
+<h3>Developed by Nivrutti Aware | StepUp Classes</h3>
 
-<div class="container">
+<!-- SEARCH STOCK -->
+<h2>🔎 Search Stock</h2>
+<input id="stockname" placeholder="Enter stock name (TCS)">
+<button onclick="searchStock()">Search</button>
 
-    <h1>🔥 Indian Stock Market Dashboard</h1>
-    <p>Developed by Nivrutti Aware | StepUp Classes Founder</p>
+<div id="stockresult"></div>
 
-    <!-- Subscribe -->
-    <div class="card">
-        <h2>📩 Subscribe for Stock Alerts</h2>
-        <input type="email" id="email" placeholder="Enter email">
-        <button class="btn" onclick="subscribe()">Subscribe</button>
-        <p id="submsg"></p>
-    </div>
+<hr>
 
-    <!-- Market News -->
-    <div class="card">
-        <h2>📰 Latest Market News</h2>
-        <button class="btn" onclick="loadNews()">Load News</button>
+<!-- PRICE -->
+<button onclick="loadPrice()">📊 Price Shockers</button>
+<div id="price"></div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Source</th>
-                </tr>
-            </thead>
-            <tbody id="newsTable"></tbody>
-        </table>
-    </div>
+<!-- IPO -->
+<button onclick="loadIPO()">🚀 IPO Details</button>
+<div id="ipo"></div>
 
-</div>
+<!-- NEWS -->
+<button onclick="loadNews()">📰 Market News</button>
+<div id="news"></div>
+
+<hr>
+
+<!-- SUBSCRIBE -->
+<h2>Subscribe</h2>
+<input id="name" placeholder="Name">
+<input id="email" placeholder="Email">
+<input id="phone" placeholder="Phone">
+<input id="plan" placeholder="Plan">
+<button onclick="subscribe()">Subscribe</button>
+
+<br><br>
+<a href="/admin" target="_blank">
+<button>🔐 Admin Dashboard</button>
+</a>
 
 <script>
 
-function subscribe(){
-    let email=document.getElementById("email").value;
+function searchStock(){
+let s=document.getElementById("stockname").value;
 
-    fetch("/subscribe",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({email:email})
-    })
-    .then(r=>r.json())
-    .then(d=>{
-        document.getElementById("submsg").innerHTML=
-        "✅ Subscribed! Total: "+d.total;
-    })
+fetch("/search/"+s)
+.then(r=>r.json())
+.then(d=>{
+document.getElementById("stockresult").innerHTML=
+"<div class='card'><pre>"+JSON.stringify(d,null,2)+"</pre></div>";
+});
+}
+
+function loadPrice(){
+fetch("/price")
+.then(r=>r.json())
+.then(d=>{
+document.getElementById("price").innerHTML=
+"<div class='card'><pre>"+JSON.stringify(d,null,2)+"</pre></div>";
+});
+}
+
+function loadIPO(){
+fetch("/ipo")
+.then(r=>r.json())
+.then(d=>{
+document.getElementById("ipo").innerHTML=
+"<div class='card'><pre>"+JSON.stringify(d,null,2)+"</pre></div>";
+});
 }
 
 function loadNews(){
-    fetch("/get_news")
-    .then(r=>r.json())
-    .then(data=>{
-        let table="";
-        if(data.data){
-            data.data.forEach(n=>{
-                table+=`<tr>
-                <td>${n.title}</td>
-                <td>${n.source}</td>
-                </tr>`
-            })
-        }
-        document.getElementById("newsTable").innerHTML=table;
-    })
+fetch("/news")
+.then(r=>r.json())
+.then(d=>{
+document.getElementById("news").innerHTML=
+"<div class='card'><pre>"+JSON.stringify(d,null,2)+"</pre></div>";
+});
 }
 
+function subscribe(){
+
+fetch("/subscribe",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+name:document.getElementById("name").value,
+email:document.getElementById("email").value,
+phone:document.getElementById("phone").value,
+plan:document.getElementById("plan").value
+})
+})
+.then(r=>r.json())
+.then(d=>alert(d.msg));
+}
 </script>
 
 </body>
 </html>
-
