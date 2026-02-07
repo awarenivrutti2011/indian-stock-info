@@ -3,9 +3,9 @@ import requests
 import mysql.connector
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="templates")
 
-# ---------- MySQL connection ----------
+# ---------------- DB CONNECTION ----------------
 db = mysql.connector.connect(
     host="mysql",
     user="root",
@@ -13,95 +13,95 @@ db = mysql.connector.connect(
     database="stockdb"
 )
 
-# ---------- HOME ----------
+# ---------------- HOME ----------------
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# ---------- SEARCH STOCK ----------
-@app.route("/search/<name>")
-def search(name):
-    url = f"https://indian-stock-exchange-api2.p.rapidapi.com/stock?name={name}"
-
-    headers = {
-        "x-rapidapi-host": "indian-stock-exchange-api2.p.rapidapi.com",
-        "x-rapidapi-key": "2c482e59eemsh84b3ee988562f35p1da2bfjsn9d541cf8e4f8"
-    }
-
+# ---------------- SEARCH STOCK ----------------
+@app.route("/search/<stock>")
+def search(stock):
     try:
-        res = requests.get(url, headers=headers, timeout=10)
+        url = f"https://indian-stock-exchange-api2.p.rapidapi.com/stock?name={stock}"
+        headers = {
+            "x-rapidapi-host": "indian-stock-exchange-api2.p.rapidapi.com",
+            "x-rapidapi-key": "2c482e59eemsh84b3ee988562f35p1da2bfjsn9d541cf8e4f8"
+        }
+        res = requests.get(url, headers=headers, timeout=15)
         return jsonify(res.json())
     except Exception as e:
         return jsonify({"error": str(e)})
 
-# ---------- PRICE SHOCKERS ----------
+# ---------------- PRICE SHOCKER ----------------
 @app.route("/price")
 def price():
-    url = "https://indian-stock-exchange-api2.p.rapidapi.com/price_shockers"
-
-    headers = {
-        "x-rapidapi-host": "indian-stock-exchange-api2.p.rapidapi.com",
-        "x-rapidapi-key": "2c482e59eemsh84b3ee988562f35p1da2bfjsn9d541cf8e4f8"
-    }
-
     try:
-        res = requests.get(url, headers=headers, timeout=10)
+        url = "https://indian-stock-exchange-api2.p.rapidapi.com/price_shockers"
+        headers = {
+            "x-rapidapi-host": "indian-stock-exchange-api2.p.rapidapi.com",
+            "x-rapidapi-key": "2c482e59eemsh84b3ee988562f35p1da2bfjsn9d541cf8e4f8"
+        }
+        res = requests.get(url, headers=headers, timeout=15)
         return jsonify(res.json())
     except Exception as e:
         return jsonify({"error": str(e)})
 
-# ---------- IPO ----------
+# ---------------- IPO ----------------
 @app.route("/ipo")
 def ipo():
-    url = "https://indian-stock-exchange-api2.p.rapidapi.com/ipo"
-
-    headers = {
-        "x-rapidapi-host": "indian-stock-exchange-api2.p.rapidapi.com",
-        "x-rapidapi-key": "2c482e59eemsh84b3ee988562f35p1da2bfjsn9d541cf8e4f8"
-    }
-
     try:
-        res = requests.get(url, headers=headers, timeout=10)
+        url = "https://indian-stock-exchange-api2.p.rapidapi.com/ipo"
+        headers = {
+            "x-rapidapi-host": "indian-stock-exchange-api2.p.rapidapi.com",
+            "x-rapidapi-key": "2c482e59eemsh84b3ee988562f35p1da2bfjsn9d541cf8e4f8"
+        }
+        res = requests.get(url, headers=headers, timeout=15)
         return jsonify(res.json())
     except Exception as e:
         return jsonify({"error": str(e)})
 
-# ---------- NEWS ----------
+# ---------------- NEWS ----------------
 @app.route("/news")
 def news():
-    url = "https://share-market-news-api-india.p.rapidapi.com/marketNews"
-
-    headers = {
-        "x-rapidapi-host": "share-market-news-api-india.p.rapidapi.com",
-        "x-rapidapi-key": "2c482e59eemsh84b3ee988562f35p1da2bfjsn9d541cf8e4f8"
-    }
-
     try:
-        res = requests.get(url, headers=headers, timeout=10)
+        url = "https://share-market-news-api-india.p.rapidapi.com/marketNews"
+        headers = {
+            "x-rapidapi-host": "share-market-news-api-india.p.rapidapi.com",
+            "x-rapidapi-key": "2c482e59eemsh84b3ee988562f35p1da2bfjsn9d541cf8e4f8"
+        }
+        res = requests.get(url, headers=headers, timeout=15)
+
+        if res.text.strip() == "":
+            return jsonify({"msg": "No news available"})
+
         return jsonify(res.json())
     except Exception as e:
         return jsonify({"error": str(e)})
 
-# ---------- SUBSCRIBE ----------
+# ---------------- SUBSCRIBE ----------------
 @app.route("/subscribe", methods=["POST"])
 def subscribe():
     data = request.json
     cursor = db.cursor()
 
     sql = "INSERT INTO subscribers (name,email,phone,plan) VALUES (%s,%s,%s,%s)"
-    cursor.execute(sql,(data['name'],data['email'],data['phone'],data['plan']))
+    cursor.execute(sql, (data['name'], data['email'], data['phone'], data['plan']))
     db.commit()
 
-    return jsonify({"msg":"Subscribed successfully"})
+    return jsonify({"msg": "Subscribed successfully"})
 
-# ---------- ADMIN ----------
+# ---------------- ADMIN PAGE ----------------
 @app.route("/admin")
 def admin():
-    cursor = db.cursor(dictionary=True)
-    cursor.execute("select * from subscribers")
-    data = cursor.fetchall()
-    return render_template("admin.html", data=data)
+    return render_template("admin.html")
 
-# ---------- RUN ----------
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+# ---------------- ADMIN DATA ----------------
+@app.route("/admin-data")
+def admindata():
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("select * from subscribers order by id desc")
+    data = cursor.fetchall()
+    return jsonify(data)
+
+# ---------------- RUN ----------------
+app.run(host="0.0.0.0", port=5000)
